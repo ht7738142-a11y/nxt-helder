@@ -1,0 +1,35 @@
+# NXT Hélder Pro — Checklist de Mise en Production
+
+- [ ] Variables d’environnement configurées (voir README):
+  - Backend: MONGO_URI, PORT, JWT_SECRET, SMTP_*, LOG_LEVEL
+  - Frontend: VITE_API_URL (si besoin)
+  - Stockage: CLOUDINARY_URL ou S3_* (optionnel)
+- [ ] Sécurité
+  - [ ] HTTPS (certificats Let’s Encrypt via reverse proxy Nginx/Traefik)
+  - [ ] Rotation des secrets (JWT, SMTP)
+  - [ ] CORS whitelisting sur domaines prod
+  - [ ] Helmet actif en prod, rate limiter configuré
+  - [ ] Sauvegarde des logs centralisée (ELK/Cloud)
+  - [ ] Backups planifiés Mongo (mongodump + sync S3)
+- [ ] Observabilité
+  - [ ] Logs JSON Winston → centralisation
+  - [ ] Dashboards Prometheus/Grafana (kubectl/Helm optionnel)
+- [ ] CI/CD
+  - [ ] Pipelines GitHub Actions (lint, test, build, docker build/push)
+  - [ ] Scan vulnérabilités images (optionnel)
+- [ ] Base de données
+  - [ ] Indexes Mongoose sur champs critiques
+  - [ ] Seeds de prod désactivés, migrations si besoin
+- [ ] Stockage fichiers
+  - [ ] S3/Cloudinary en prod, stockage local désactivé
+  - [ ] Politique de rétention
+- [ ] GDPR
+  - [ ] Export/suppression compte sur demande
+  - [ ] Mentions légales et politique de confidentialité
+- [ ] Performance
+  - [ ] Pagination par défaut, lazy loading
+  - [ ] Cache (Redis) pour endpoints lourds (option)
+- [ ] Infra
+  - [ ] Docker images construites et poussé au registre
+  - [ ] Déploiement via docker-compose ou Kubernetes (Helm) validé
+  - [ ] Reverse proxy et WAF (optionnel)

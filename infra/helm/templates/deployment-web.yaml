@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nxt-helder.fullname" . }}-web
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "nxt-helder.fullname" . }}-web
+  template:
+    metadata:
+      labels:
+        app: {{ include "nxt-helder.fullname" . }}-web
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.image.repository.web }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.web.service.port }}

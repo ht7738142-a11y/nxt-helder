@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nxt-helder.fullname" . }}-server
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "nxt-helder.fullname" . }}-server
+  template:
+    metadata:
+      labels:
+        app: {{ include "nxt-helder.fullname" . }}-server
+    spec:
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository.server }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.server.service.port }}
+          env:
+            - name: PORT
+              value: "{{ .Values.server.env.PORT }}"
+            - name: MONGO_URI
+              value: "{{ .Values.server.env.MONGO_URI }}"
+            - name: JWT_SECRET
+              value: "{{ .Values.server.env.JWT_SECRET }}"

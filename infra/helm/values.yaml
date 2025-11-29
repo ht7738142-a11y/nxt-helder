@@ -1,0 +1,30 @@
+image:
+  repository:
+    server: nxt-helder/server
+    web: nxt-helder/web
+  tag: latest
+
+server:
+  replicaCount: 1
+  env:
+    MONGO_URI: mongodb://mongo:27017/nxt_helder
+    PORT: "5000"
+    JWT_SECRET: change_me
+  service:
+    type: ClusterIP
+    port: 5000
+
+web:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+
+ingress:
+  enabled: false
+  className: nginx
+  hosts:
+    - host: nxt-helder.local
+      paths:
+        - path: /
+          pathType: Prefix

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: nxt-helder
+version: 0.1.0
+description: Helm chart minimal pour NXT Hélder Pro (server + web)
+type: application

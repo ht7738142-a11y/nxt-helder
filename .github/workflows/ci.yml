@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install backend deps
+        working-directory: ./server
+        run: npm ci
+      - name: Lint backend
+        working-directory: ./server
+        run: node -e "console.log('lint placeholder')"
+      - name: Build backend
+        working-directory: ./server
+        run: node -e "console.log('build placeholder')"
+      - name: Install frontend deps
+        working-directory: ./web
+        run: npm ci
+      - name: Build frontend
+        working-directory: ./web
+        run: npm run build

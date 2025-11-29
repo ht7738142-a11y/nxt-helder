@@ -1,0 +1,83 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║   🚀 METTRE NXT HELDER EN LIGNE - GUIDE EXPRESS                ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+📋 PRÉPARATION (5 MIN)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ouvre PowerShell dans ce dossier :
+   C:\Users\helde\CascadeProjects\helder\nxt-helder
+
+2. Exécute le script d'initialisation Git :
+   .\INIT-GIT.ps1
+
+3. Ouvre le guide détaillé :
+   QUICK-DEPLOY.md
+
+
+🎯 RÉSUMÉ DES ÉTAPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ÉTAPE 1 - GITHUB (2 min)
+   → Créer un repo "nxt-helder"
+   → git push -u origin main
+
+✅ ÉTAPE 2 - MONGODB ATLAS (5 min)
+   → Créer un cluster gratuit
+   → Copier la connection string
+
+✅ ÉTAPE 3 - RENDER (Backend) (3 min)
+   → Connecter GitHub
+   → Déployer le dossier "server"
+   → Ajouter les variables d'environnement
+
+✅ ÉTAPE 4 - NETLIFY (Frontend) (3 min)
+   → Connecter GitHub
+   → Déployer le dossier "web"
+   → Ajouter VITE_API_URL
+
+
+🌐 SERVICES REQUIS (TOUS GRATUITS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. GitHub       → github.com
+2. MongoDB      → mongodb.com/cloud/atlas
+3. Render       → render.com
+4. Netlify      → netlify.com
+
+
+⏱️ TEMPS TOTAL : ~15 MINUTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📚 GUIDES DISPONIBLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 QUICK-DEPLOY.md      → Guide rapide étape par étape (15 min)
+📖 DEPLOIEMENT.md        → Guide complet et détaillé
+📖 PLANNING_UTILISATION.md → Comment utiliser l'app
+
+
+🎉 RÉSULTAT FINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ton app sera accessible sur :
+→ https://nxt-helder.netlify.app (frontend)
+→ https://nxt-helder-api.onrender.com (backend)
+
+Login par défaut :
+→ Email : admin@nxt.com
+→ Mot de passe : admin123
+
+
+💡 AIDE RAPIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question ? Regarde le guide QUICK-DEPLOY.md
+
+Problème ? Section "Dépannage" dans DEPLOIEMENT.md
+
+
+✨ BONNE CHANCE !
