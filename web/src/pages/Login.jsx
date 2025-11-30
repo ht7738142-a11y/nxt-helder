@@ -16,6 +16,7 @@ export default function Login({ onLogin }) {
     setLoading(true); setError('')
     try {
       console.log('Login: attempting login for', email)
+      console.log('Login: API base URL:', api.defaults.baseURL)
       const payload = needOtp && otp ? { email, password, otp } : { email, password }
       const { data } = await api.post('/auth/login', payload)
       console.log('Login: success, got token and user:', data.user?.name)
