@@ -18,7 +18,10 @@ export default function Login({ onLogin }) {
       console.log('Login: attempting login for', email)
       console.log('Login: API base URL:', api.defaults.baseURL)
       const payload = needOtp && otp ? { email, password, otp } : { email, password }
+      console.log('Login: payload ready, sending request...')
       const { data } = await api.post('/auth/login', payload)
+      console.log('Login: request completed')
+      console.log('Login: response data:', data)
       console.log('Login: success, got token and user:', data.user?.name)
       
       if (!data.accessToken) {
@@ -30,11 +33,15 @@ export default function Login({ onLogin }) {
       console.log('Login: navigating to dashboard')
       navigate('/dashboard')
     } catch (e) {
-      console.error('Login: error', e)
+      console.error('Login: error caught', e)
+      console.error('Login: error type:', e.constructor.name)
+      console.error('Login: error message:', e.message)
+      console.error('Login: error response:', e?.response)
       const msg = e?.response?.data?.error || e.message || 'Erreur de connexion'
       setError(msg)
       if (msg?.toLowerCase().includes('otp')) setNeedOtp(true)
     } finally {
+      console.log('Login: cleaning up, loading =', false)
       setLoading(false)
     }
   }
