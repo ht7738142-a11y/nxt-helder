@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: nxt-helder-api
+    runtime: docker
+    repo: https://github.com/ht7738142-a11y/nxt-helder
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
