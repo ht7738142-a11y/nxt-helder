@@ -4,8 +4,11 @@ import axios from 'axios'
 const RAW_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE.replace(/\/$/, '')}/api`
 
-// Instance Axios
-export const api = axios.create({ baseURL: API_BASE })
+// Instance Axios avec timeout de 30s pour éviter attente infinie (Render cold start)
+export const api = axios.create({ 
+  baseURL: API_BASE,
+  timeout: 30000 // 30 secondes
+})
 
 // ⚡ Gestion des tokens
 export function setTokens(accessToken, refreshToken) {
