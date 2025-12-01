@@ -25,7 +25,6 @@ import Workflow from './pages/Workflow.jsx'
 import Users from './pages/Users.jsx'
 import Audit from './pages/Audit.jsx'
 import Depenses from './pages/Depenses.jsx'
-import Companies from './pages/Companies.jsx'
 import Search from './pages/Search.jsx'
 import Taches from './pages/Taches.jsx'
 import BISegments from './pages/BISegments.jsx'
@@ -110,7 +109,6 @@ export default function App() {
                 <Route path="/users" element={<Protected><Users /></Protected>} />
                 <Route path="/audit" element={<Protected><Audit /></Protected>} />
                 <Route path="/depenses" element={<Protected><Depenses /></Protected>} />
-                <Route path="/companies" element={<Protected><Companies /></Protected>} />
                 <Route path="/search" element={<Protected><Search /></Protected>} />
                 <Route path="/taches" element={<Protected><Taches /></Protected>} />
                 <Route path="/bi-segments" element={<Protected><BISegments /></Protected>} />
