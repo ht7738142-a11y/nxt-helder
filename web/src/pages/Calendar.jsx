@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, Clock, MapPin, Calendar as CalendarIcon } from 'lucide-react';
-import api from '../api';
+import { api } from '../api';
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
