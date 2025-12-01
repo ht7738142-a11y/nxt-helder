@@ -145,9 +145,9 @@ export default function Contacts() {
               <tr className="text-left text-gray-600">
                 <th className="px-4 py-3">Nom</th>
                 <th className="px-4 py-3">Profil</th>
-                <th className="px-4 py-3">Société</th>
-                <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Téléphone</th>
+                <th className="px-4 py-3">N° de TVA</th>
+                <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Adresse</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -163,9 +163,9 @@ export default function Contacts() {
                       {contact.profil || 'Non défini'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{contact.company || '-'}</td>
-                  <td className="px-4 py-3 text-blue-600">{contact.email || '-'}</td>
                   <td className="px-4 py-3">{contact.phone || '-'}</td>
+                  <td className="px-4 py-3 text-gray-600">{contact.vat || '-'}</td>
+                  <td className="px-4 py-3 text-blue-600">{contact.email || '-'}</td>
                   <td className="px-4 py-3 text-gray-600">{contact.address || '-'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
