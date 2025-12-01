@@ -40,6 +40,7 @@ import ChantierDetail from './pages/ChantierDetail.jsx'
 import PlanningGantt from './pages/PlanningGantt.jsx'
 import GestionChantiers from './pages/GestionChantiers.jsx'
 import Metres from './pages/Metres.jsx'
+import Calendar from './pages/Calendar.jsx'
 
 function Protected({ children }) {
   const token = getToken()
@@ -95,6 +96,7 @@ export default function App() {
                 <Route path="/chantiers-calendrier" element={<Protected><ChantiersCalendrier /></Protected>} />
                 <Route path="/planning" element={<Protected><Planning /></Protected>} />
                 <Route path="/planning-gantt" element={<Protected><PlanningGantt /></Protected>} />
+                <Route path="/calendar" element={<Protected><Calendar /></Protected>} />
                 <Route path="/stock" element={<Protected><Stock /></Protected>} />
                 <Route path="/metres" element={<Protected><Metres /></Protected>} />
                 <Route path="/parametres" element={<Protected><Parametres /></Protected>} />

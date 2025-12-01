@@ -14,6 +14,7 @@ export default function Sidebar() {
 
         <div className={sectionTitle}>Gestion</div>
         <NavLink to="/planning" className={linkCls}>📅 Planning</NavLink>
+        <NavLink to="/calendar" className={linkCls}>📆 Agenda</NavLink>
         <NavLink to="/contacts" className={linkCls}>👥 Contacts</NavLink>
         <NavLink to="/devis" className={linkCls}>📝 Devis</NavLink>
         <NavLink to="/factures" className={linkCls}>💶 Factures</NavLink>
