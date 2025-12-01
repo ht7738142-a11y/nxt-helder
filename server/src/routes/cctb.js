@@ -2,6 +2,7 @@ import express from 'express';
 import XLSX from 'xlsx';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,14 @@ function loadCCTB() {
   try {
     const filePath = path.join(__dirname, '../../data/cctb.xlsx');
     console.log('📂 Chargement CCTB depuis:', filePath);
+    
+    // Vérifier que le fichier existe
+    if (!fs.existsSync(filePath)) {
+      console.error('❌ Fichier CCTB introuvable:', filePath);
+      return { items: [], sheets: [] };
+    }
+    console.log('✅ Fichier CCTB trouvé');
+    
     const workbook = XLSX.readFile(filePath);
     
     cachedSheets = workbook.SheetNames;
