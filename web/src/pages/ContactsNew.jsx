@@ -181,11 +181,12 @@ export default function ContactsNew() {
             <table className="w-full text-sm">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
                 <tr className="text-left text-gray-700 font-semibold">
-                  <th className="px-4 py-3">Contact</th>
+                  <th className="px-4 py-3">Nom</th>
                   <th className="px-4 py-3">Profil</th>
-                  <th className="px-4 py-3">Société</th>
-                  <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Téléphone</th>
+                  <th className="px-4 py-3">N° de TVA</th>
+                  <th className="px-4 py-3">E-mail</th>
+                  <th className="px-4 py-3">Adresse</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -194,25 +195,31 @@ export default function ContactsNew() {
                   const prof = getProfession(contact.profile);
                   return (
                     <tr key={contact._id} className="border-b hover:bg-blue-50 transition">
+                      {/* Nom */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <Avatar contact={contact} size="md" showIcon />
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {getFullName(contact.firstName, contact.lastName)}
-                            </div>
+                          <div className="font-medium text-gray-900">
+                            {getFullName(contact.firstName, contact.lastName)}
                           </div>
                         </div>
                       </td>
+                      {/* Profil */}
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
                           <span>{prof.icon}</span>
                           <span>{prof.label}</span>
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{contact.company || '-'}</td>
-                      <td className="px-4 py-3 text-blue-600">{contact.email || '-'}</td>
+                      {/* Téléphone */}
                       <td className="px-4 py-3 text-gray-700">{contact.phone || '-'}</td>
+                      {/* N° de TVA (peut être vide pour l'instant) */}
+                      <td className="px-4 py-3 text-gray-600">{contact.vat || '-'}</td>
+                      {/* E-mail */}
+                      <td className="px-4 py-3 text-blue-600">{contact.email || '-'}</td>
+                      {/* Adresse */}
+                      <td className="px-4 py-3 text-gray-600">{contact.address || '-'}</td>
+                      {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -243,7 +250,7 @@ export default function ContactsNew() {
                 })}
                 {paginatedContacts.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
                       <div className="text-4xl mb-2">🔍</div>
                       <div>Aucun contact trouvé</div>
                     </td>
