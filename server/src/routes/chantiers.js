@@ -23,8 +23,38 @@ router.get('/', async (_req, res) => {
 });
 
 router.post('/', requireRole('admin','commercial'), async (req, res) => {
-  const item = await Chantier.create(req.body);
-  res.json(item);
+  try {
+    const payload = { ...req.body };
+
+    // Normaliser le champ client : si ce n'est pas un ObjectId valide, on le supprime (client optionnel)
+    if (!payload.client || typeof payload.client !== 'string' || !/^[0-9a-fA-F]{24}$/.test(payload.client)) {
+      delete payload.client;
+    }
+
+    // Mapper les statuts français vers l'enum du modèle
+    if (payload.status) {
+      const mapStatus = {
+        preparation: 'planned',
+        'préparation': 'planned',
+        en_cours: 'in_progress',
+        termine: 'completed',
+        terminé: 'completed'
+      };
+      const key = String(payload.status).toLowerCase();
+      if (mapStatus[key]) {
+        payload.status = mapStatus[key];
+      }
+    }
+
+    const item = await Chantier.create(payload);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error('Erreur création chantier:', error);
+    return res.status(400).json({
+      error: 'Chantier validation failed',
+      details: error.message
+    });
+  }
 });
 
 router.put('/:id', requireRole('admin','commercial'), async (req, res) => {
