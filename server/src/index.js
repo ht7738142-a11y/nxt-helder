@@ -49,32 +49,8 @@ import assignmentsRoutes from './routes/assignments.js';
 // import presencesRoutes from './routes/presences.js';
 
 const app = express();
-// CORS: autoriser explicitement Netlify et localhost
-const allowedOrigins = [
-  'https://statuesque-shortbread-537a53.netlify.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Autoriser les requêtes sans origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Autoriser les origines dans la liste
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('[CORS] Origin refusée:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-app.use(cors(corsOptions));
+// CORS simplifié : autoriser toutes les origines (temporaire pour debug)
+app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(
