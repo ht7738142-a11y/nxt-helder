@@ -22,6 +22,7 @@ export default function Sidebar() {
         {/* Liens retirés sur demande */}
         <NavLink to="/stock" className={linkCls}>📦 Stock</NavLink>
         <NavLink to="/metres" className={linkCls}>📐 Métré</NavLink>
+        <NavLink to="/presences" className={linkCls}>📋 Journal de Présences</NavLink>
         <NavLink to="/taches" className={linkCls}>✅ Tâches</NavLink>
         <NavLink to="/depenses" className={linkCls}>💳 Dépenses</NavLink>
         <NavLink to="/conges" className={linkCls}>🌴 Congés</NavLink>
