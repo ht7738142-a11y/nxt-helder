@@ -180,6 +180,27 @@ export default function PresenceJournal() {
     }
   };
 
+  const handleDownloadPDF = async (journalId) => {
+    try {
+      const response = await api.get(`/presences/${journalId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      // Créer un lien de téléchargement
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `journal-presence-${date}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+      alert('Erreur lors du téléchargement du PDF');
+    }
+  };
+
   const handleReset = () => {
     setStep('init');
     setParsedCompanies([]);
@@ -499,8 +520,9 @@ export default function PresenceJournal() {
                     <Trash2 className="w-5 h-5" />
                   </button>
                   <button
+                    onClick={() => handleDownloadPDF(journal._id)}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                    title="Exporter PDF (bientôt)"
+                    title="Télécharger PDF"
                   >
                     <Download className="w-4 h-4" />
                     PDF
