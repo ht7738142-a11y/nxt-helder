@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { auth } from '../middleware/auth.js';
 import PresenceJournal from '../models/PresenceJournal.js';
 import MainCompany from '../models/MainCompany.js';
+import Chantier from '../models/Chantier.js';
 import multer from 'multer';
 import Papa from 'papaparse';
+import PDFDocument from 'pdfkit';
 
 const router = Router();
 router.use(auth(true));
@@ -222,6 +224,97 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Journal supprimé', id });
   } catch (error) {
     console.error('Erreur suppression journal:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET - Export PDF d'un journal
+router.get('/:id/pdf', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const journal = await PresenceJournal.findOne({ _id: id, user: userId });
+
+    if (!journal) {
+      return res.status(404).json({ error: 'Journal non trouvé' });
+    }
+
+    // Récupérer les infos du chantier
+    const chantier = await Chantier.findById(journal.chantier);
+    const chantierName = chantier ? chantier.title : 'Chantier inconnu';
+
+    // Créer le document PDF
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Headers pour le téléchargement
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="journal-presence-${journal.date}.pdf"`);
+
+    // Pipe le PDF vers la réponse
+    doc.pipe(res);
+
+    // En-tête
+    doc.fontSize(20).text('Journal de Présences', { align: 'center' });
+    doc.moveDown();
+
+    // Infos générales
+    doc.fontSize(12);
+    doc.text(`Date: ${new Date(journal.date).toLocaleDateString('fr-BE')}`);
+    doc.text(`Chantier: ${chantierName}`);
+    doc.text(`Entreprise ST Principale: ${journal.mainCompanyName}`);
+    doc.text(`Sous-traitant: ${journal.subcontractorName}`);
+    if (journal.subcontractorNumber) {
+      doc.text(`N° Entreprise: ${journal.subcontractorNumber}`);
+    }
+    doc.moveDown();
+
+    // Tableau des ouvriers
+    doc.fontSize(14).text('Liste des ouvriers présents:', { underline: true });
+    doc.moveDown(0.5);
+
+    doc.fontSize(10);
+    const tableTop = doc.y;
+    const colWidths = { niss: 120, firstName: 100, lastName: 100, present: 80, remarks: 120 };
+    let y = tableTop;
+
+    // En-têtes du tableau
+    doc.font('Helvetica-Bold');
+    doc.text('NISS', 50, y, { width: colWidths.niss, continued: false });
+    doc.text('Prénom', 50 + colWidths.niss, y, { width: colWidths.firstName, continued: false });
+    doc.text('Nom', 50 + colWidths.niss + colWidths.firstName, y, { width: colWidths.lastName, continued: false });
+    doc.text('Présent', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName, y, { width: colWidths.present, continued: false });
+    doc.text('Remarques', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName + colWidths.present, y, { width: colWidths.remarks, continued: false });
+    
+    y += 20;
+    doc.moveTo(50, y).lineTo(550, y).stroke();
+    y += 5;
+
+    // Lignes du tableau
+    doc.font('Helvetica');
+    journal.workers.forEach((worker, index) => {
+      if (y > 700) {
+        doc.addPage();
+        y = 50;
+      }
+
+      doc.text(worker.niss || '', 50, y, { width: colWidths.niss, continued: false });
+      doc.text(worker.firstName || '', 50 + colWidths.niss, y, { width: colWidths.firstName, continued: false });
+      doc.text(worker.lastName || '', 50 + colWidths.niss + colWidths.firstName, y, { width: colWidths.lastName, continued: false });
+      doc.text(worker.present ? 'Oui' : 'Non', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName, y, { width: colWidths.present, continued: false });
+      doc.text(worker.remarks || '', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName + colWidths.present, y, { width: colWidths.remarks, continued: false });
+
+      y += 20;
+    });
+
+    // Pied de page
+    doc.moveDown(2);
+    doc.fontSize(8).text(`Document généré le ${new Date().toLocaleString('fr-BE')}`, { align: 'center' });
+
+    // Finaliser le PDF
+    doc.end();
+  } catch (error) {
+    console.error('Erreur génération PDF:', error);
     res.status(500).json({ error: error.message });
   }
 });
