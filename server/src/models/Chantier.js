@@ -9,7 +9,7 @@ const FileSchema = new mongoose.Schema({
 
 const ChantierSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
+  client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: false },
   address: { type: String },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['planned','in_progress','completed','on_hold'], default: 'planned' },
