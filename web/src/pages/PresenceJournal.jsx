@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, Plus, Calendar, Building2, FileText, Download, Trash2, Edit2 } from 'lucide-react';
+import { Upload, Plus, Calendar, Building2, FileText, Download, Trash2, Edit2, Users } from 'lucide-react';
 import { api } from '../api';
 
 export default function PresenceJournal() {
@@ -14,6 +14,12 @@ export default function PresenceJournal() {
   const [existingJournals, setExistingJournals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('init'); // init, csv-uploaded, journals-created
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    subcontractorName: '',
+    subcontractorNumber: '',
+    workers: [{ niss: '', firstName: '', lastName: '' }]
+  });
 
   useEffect(() => {
     loadChantiers();
@@ -181,6 +187,84 @@ export default function PresenceJournal() {
     setCsvFile(null);
   };
 
+  const handleCreateManualJournal = async () => {
+    if (!selectedChantier) {
+      alert('Veuillez sélectionner un chantier');
+      return;
+    }
+
+    if (!mainCompanyName) {
+      alert('Veuillez saisir l\'entreprise ST principale');
+      return;
+    }
+
+    if (!manualForm.subcontractorName.trim()) {
+      alert('Veuillez saisir le nom du sous-traitant');
+      return;
+    }
+
+    const validWorkers = manualForm.workers.filter(w => w.firstName.trim() || w.lastName.trim());
+    if (validWorkers.length === 0) {
+      alert('Veuillez ajouter au moins un ouvrier');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const journalData = {
+        subcontractorName: manualForm.subcontractorName.trim(),
+        subcontractorNumber: manualForm.subcontractorNumber.trim(),
+        workers: validWorkers.map(w => ({
+          niss: w.niss.trim(),
+          firstName: w.firstName.trim(),
+          lastName: w.lastName.trim(),
+          morningPresent: true,
+          afternoonPresent: true,
+          remarks: ''
+        }))
+      };
+
+      await api.post('/presences', {
+        chantierId: selectedChantier,
+        date,
+        mainCompanyName,
+        journals: [journalData]
+      });
+
+      alert('Journal créé avec succès');
+      setShowManualForm(false);
+      setManualForm({
+        subcontractorName: '',
+        subcontractorNumber: '',
+        workers: [{ niss: '', firstName: '', lastName: '' }]
+      });
+      loadExistingJournals();
+    } catch (error) {
+      console.error('Erreur création journal manuel:', error);
+      alert('Erreur lors de la création du journal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addWorker = () => {
+    setManualForm({
+      ...manualForm,
+      workers: [...manualForm.workers, { niss: '', firstName: '', lastName: '' }]
+    });
+  };
+
+  const removeWorker = (index) => {
+    const newWorkers = manualForm.workers.filter((_, i) => i !== index);
+    setManualForm({ ...manualForm, workers: newWorkers });
+  };
+
+  const updateWorker = (index, field, value) => {
+    const newWorkers = [...manualForm.workers];
+    newWorkers[index][field] = value;
+    setManualForm({ ...manualForm, workers: newWorkers });
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* En-tête */}
@@ -258,38 +342,66 @@ export default function PresenceJournal() {
       {step === 'init' && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Importer depuis Checkinatwork
+            Créer un journal de présence
           </h2>
           
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label className="flex-1 cursor-pointer">
-                <div className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
-                  <Upload className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600">
-                    {csvFile ? csvFile.name : 'Choisir un fichier CSV...'}
-                  </span>
-                </div>
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+            {/* Option 1: Import CSV */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Option 1: Importer depuis Checkinatwork
+              </h3>
+              
+              <div className="flex items-center gap-4 mb-3">
+                <label className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {csvFile ? csvFile.name : 'Choisir un fichier CSV...'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
 
-              <button
-                onClick={handleImportCSV}
-                disabled={!csvFile || loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Import...' : 'Importer'}
-              </button>
+                <button
+                  onClick={handleImportCSV}
+                  disabled={!csvFile || loading}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Import...' : 'Importer'}
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-500">
+                Exportez la liste des présences depuis Checkinatwork et importez-la ici.
+              </p>
             </div>
 
-            <p className="text-sm text-gray-500">
-              Exportez la liste des présences depuis Checkinatwork et importez-la ici.
-            </p>
+            {/* Option 2: Manuel */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Option 2: Saisir manuellement
+              </h3>
+              
+              <p className="text-sm text-gray-500 mb-3">
+                Ajoutez manuellement les ouvriers présents sur le chantier.
+              </p>
+
+              <button
+                onClick={() => setShowManualForm(true)}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Saisir manuellement
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -396,6 +508,126 @@ export default function PresenceJournal() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de saisie manuelle */}
+      {showManualForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Saisie manuelle - Journal de présence</h2>
+              <button
+                onClick={() => setShowManualForm(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Sous-traitant */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sous-traitant *
+                  </label>
+                  <input
+                    type="text"
+                    value={manualForm.subcontractorName}
+                    onChange={(e) => setManualForm({ ...manualForm, subcontractorName: e.target.value })}
+                    placeholder="Ex: DELTA PLAC SRL"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    N° entreprise
+                  </label>
+                  <input
+                    type="text"
+                    value={manualForm.subcontractorNumber}
+                    onChange={(e) => setManualForm({ ...manualForm, subcontractorNumber: e.target.value })}
+                    placeholder="Ex: 823108346"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Ouvriers */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Ouvriers présents
+                  </label>
+                  <button
+                    onClick={addWorker}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Ajouter
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {manualForm.workers.map((worker, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                      <div className="flex-1 grid grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          value={worker.lastName}
+                          onChange={(e) => updateWorker(index, 'lastName', e.target.value)}
+                          placeholder="Nom"
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <input
+                          type="text"
+                          value={worker.firstName}
+                          onChange={(e) => updateWorker(index, 'firstName', e.target.value)}
+                          placeholder="Prénom"
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <input
+                          type="text"
+                          value={worker.niss}
+                          onChange={(e) => updateWorker(index, 'niss', e.target.value)}
+                          placeholder="NISS"
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      {manualForm.workers.length > 1 && (
+                        <button
+                          onClick={() => removeWorker(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowManualForm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateManualJournal}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                {loading ? 'Création...' : 'Créer le journal'}
+              </button>
+            </div>
           </div>
         </div>
       )}
