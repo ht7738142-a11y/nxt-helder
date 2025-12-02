@@ -222,11 +222,14 @@ export default function PresenceJournal() {
                 <option value="">Sélectionner un chantier</option>
                 {chantiers.map(c => (
                   <option key={c._id} value={c._id}>
-                    {c.name}
+                    {c.title || c.name}
                   </option>
                 ))}
               </select>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Pas de chantier ? <a href="/chantiers" className="text-blue-600 hover:underline">Créez-en un ici</a>
+            </p>
           </div>
 
           {/* Entreprise ST Principale */}

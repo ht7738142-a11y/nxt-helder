@@ -2,12 +2,23 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import FileUploader from '../components/FileUploader'
+import { X, Plus } from 'lucide-react'
 
 export default function Chantiers(){
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
   const [uploadFor, setUploadFor] = useState(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    address: '',
+    client: '',
+    description: '',
+    costEstimate: '',
+    status: 'preparation'
+  })
+  const [createLoading, setCreateLoading] = useState(false)
 
   async function load(){ 
     try {
@@ -27,8 +38,39 @@ export default function Chantiers(){
     await load()
   }
 
+  async function handleCreateChantier(){
+    if (!createForm.title.trim()) {
+      alert('Veuillez saisir un titre pour le chantier')
+      return
+    }
+
+    setCreateLoading(true)
+    try {
+      const payload = {
+        ...createForm,
+        costEstimate: createForm.costEstimate ? parseFloat(createForm.costEstimate) : 0
+      }
+      await api.post('/chantiers', payload)
+      setShowCreateModal(false)
+      setCreateForm({
+        title: '',
+        address: '',
+        client: '',
+        description: '',
+        costEstimate: '',
+        status: 'preparation'
+      })
+      await load()
+    } catch (error) {
+      console.error('Erreur création chantier:', error)
+      alert('Erreur lors de la création du chantier')
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
   const filtered = items.filter(c => 
-    (c.title||'').toLowerCase().includes(q.toLowerCase()) || 
+    (c.title||c.name||'').toLowerCase().includes(q.toLowerCase()) || 
     (c.client?.name||'').toLowerCase().includes(q.toLowerCase())
   )
 
@@ -54,8 +96,12 @@ export default function Chantiers(){
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Chantiers</h1>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
-          + Nouveau chantier
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nouveau chantier
         </button>
       </div>
 
@@ -92,7 +138,7 @@ export default function Chantiers(){
               {filtered.map(c => (
                 <tr key={c._id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <div className="font-medium">{c.title || '-'}</div>
+                    <div className="font-medium">{c.title || c.name || '-'}</div>
                     <div className="text-xs text-gray-500">{c.address || ''}</div>
                   </td>
                   <td className="px-4 py-3">{c.client?.name || '-'}</td>
@@ -144,6 +190,129 @@ export default function Chantiers(){
             >
               Annuler
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de création de chantier */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Nouveau chantier</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Titre du chantier *
+                </label>
+                <input
+                  type="text"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  placeholder="Ex: Bâtiment A - Farciennes"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse
+                </label>
+                <input
+                  type="text"
+                  value={createForm.address}
+                  onChange={(e) => setCreateForm({ ...createForm, address: e.target.value })}
+                  placeholder="Ex: 103 Rue du Puits Communal, 6240 Farciennes"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Client
+                </label>
+                <input
+                  type="text"
+                  value={createForm.client}
+                  onChange={(e) => setCreateForm({ ...createForm, client: e.target.value })}
+                  placeholder="Ex: COORS ASSOCIATION"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Statut
+                  </label>
+                  <select
+                    value={createForm.status}
+                    onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="preparation">Préparation</option>
+                    <option value="en_cours">En cours</option>
+                    <option value="termine">Terminé</option>
+                    <option value="suspendu">Suspendu</option>
+                    <option value="annule">Annulé</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget estimé (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={createForm.costEstimate}
+                    onChange={(e) => setCreateForm({ ...createForm, costEstimate: e.target.value })}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  placeholder="Description optionnelle..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateChantier}
+                disabled={createLoading}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                {createLoading ? 'Création...' : 'Créer'}
+              </button>
+            </div>
           </div>
         </div>
       )}
