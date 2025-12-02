@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 // Base URL de l'API (normalisée pour inclure /api)
-const RAW_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+// Si aucune variable d'env n'est définie, on pointe par défaut vers le backend Render en ligne
+const RAW_BASE = import.meta.env.VITE_API_URL || 'https://nxt-helder.onrender.com/api'
 const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE.replace(/\/$/, '')}/api`
 
 // Instance Axios avec timeout de 30s pour éviter attente infinie (Render cold start)
