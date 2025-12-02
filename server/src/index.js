@@ -45,8 +45,7 @@ import graphqlRoutes from './routes/graphql.js';
 import cctbRoutes from './routes/cctb.js';
 import contactsRoutes from './routes/contacts.js';
 import assignmentsRoutes from './routes/assignments.js';
-// TEMPORAIRE : désactivé pour debug
-// import presencesRoutes from './routes/presences.js';
+import presencesRoutes from './routes/presences.js';
 
 const app = express();
 // CORS simplifié : autoriser toutes les origines (temporaire pour debug)
@@ -112,8 +111,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/cctb', cctbRoutes);
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/assignments', assignmentsRoutes);
-// TEMPORAIRE : désactivé pour debug
-// app.use('/api/presences', presencesRoutes); // Journal de présences routes
+app.use('/api/presences', presencesRoutes); // Journal de présences routes
 
 // Quick access: redirect root to Swagger UI
 app.get('/', (_req, res) => {
