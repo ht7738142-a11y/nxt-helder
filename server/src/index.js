@@ -135,7 +135,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/cctb', cctbRoutes);
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/assignments', assignmentsRoutes);
-app.use('/api/presences', presencesRoutes);
+app.use('/api/presences', presencesRoutes); // Journal de présences routes
 
 // Quick access: redirect root to Swagger UI
 app.get('/', (_req, res) => {
