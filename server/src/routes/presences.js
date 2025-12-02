@@ -88,25 +88,28 @@ router.post('/import-checkin', upload.single('file'), async (req, res) => {
   }
 });
 
-// POST - Créer un ou plusieurs journaux de présence
+// POST - Créer les journaux de présence
 router.post('/', async (req, res) => {
   try {
-    const userId = req.user.id;
     const { chantierId, date, mainCompanyName, journals } = req.body;
-
-    if (!chantierId || !date || !mainCompanyName || !journals || !Array.isArray(journals)) {
-      return res.status(400).json({ error: 'Données manquantes' });
+    
+    if (!chantierId || !date || !mainCompanyName || !journals) {
+      return res.status(400).json({ error: 'Champs requis manquants' });
     }
 
-    // Enregistrer/mettre à jour l'entreprise principale
-    await MainCompany.findOneAndUpdate(
-      { name: mainCompanyName, user: userId },
-      { lastUsedAt: new Date() },
-      { upsert: true, new: true }
-    );
+    const userId = req.user.id;
+    const createdJournals = [];
+
+    // Sauvegarder l'entreprise principale
+    if (mainCompanyName) {
+      await MainCompany.findOneAndUpdate(
+        { user: userId, name: mainCompanyName },
+        { user: userId, name: mainCompanyName, lastUsedAt: new Date() },
+        { upsert: true, new: true }
+      );
+    }
 
     // Créer les journaux
-    const createdJournals = [];
     for (const journal of journals) {
       const newJournal = await PresenceJournal.create({
         chantier: chantierId,
