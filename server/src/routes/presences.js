@@ -91,13 +91,13 @@ router.post('/import-checkin', upload.single('file'), async (req, res) => {
 // POST - Créer les journaux de présence
 router.post('/', async (req, res) => {
   try {
+    const userId = req.user.id;
     const { chantierId, date, mainCompanyName, journals } = req.body;
     
     if (!chantierId || !date || !mainCompanyName || !journals) {
       return res.status(400).json({ error: 'Champs requis manquants' });
     }
 
-    const userId = req.user.id;
     const createdJournals = [];
 
     // Sauvegarder l'entreprise principale
