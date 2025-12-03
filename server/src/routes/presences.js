@@ -412,11 +412,13 @@ router.get('/:id/pdf', async (req, res) => {
         doc.fillColor('black');
         doc.text(worker.niss || '', colX.niss + 5, rowY + 10, { width: 90 });
         
-        // Prénom
-        doc.text((worker.firstName || '').toUpperCase(), colX.prenom + 5, rowY + 10, { width: 90 });
+        // Prénom (sans espaces inutiles)
+        const prenom = (worker.firstName || '').trim();
+        doc.text(prenom.toUpperCase(), colX.prenom + 5, rowY + 10, { width: 90 });
         
-        // Nom
-        doc.text((worker.lastName || '').toUpperCase(), colX.nom + 5, rowY + 10, { width: 90 });
+        // Nom (sans espaces inutiles)
+        const nom = (worker.lastName || '').trim();
+        doc.text(nom.toUpperCase(), colX.nom + 5, rowY + 10, { width: 90 });
         
         // Présent (Oui en vert, Non en rouge)
         const isPresent = worker.present !== false;
