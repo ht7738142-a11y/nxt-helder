@@ -356,11 +356,11 @@ router.get('/:id/pdf', async (req, res) => {
     }
 
     // Petite ligne de séparation juste sous NIV 2
-    y += 5;
+    y += 2;
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
 
-    // Le tableau commence presque directement après NIV 2
-    const tableStartY = y + 3;
+    // Le tableau commence directement après la ligne
+    const tableStartY = y + 1;
 
     // Tableau simplifié : NISS | Prénom | Nom | Présent | Remarques
     const colX = {
