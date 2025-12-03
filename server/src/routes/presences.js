@@ -327,6 +327,55 @@ router.get('/:id/pdf', async (req, res) => {
     // Date à droite
     doc.font('Helvetica-Bold').fontSize(9);
     doc.text(`DATE :`, pageWidth - margin - 110, y + 8);
+    doc.font('Helvetica').fontSize(8);
+    doc.text(`${new Date(journal.date).toLocaleDateString('fr-BE')}`, pageWidth - margin - 80, y + 8);
+
+    y += 35;
+
+    // Section chaîne de sous-traitance
+    doc.rect(margin, y, contentWidth, 50).stroke();
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
+    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y + 8);
+
+    y += 20;
+    doc.fontSize(8).font('Helvetica');
+    doc.text('NIV 1', margin + 10, y);
+    doc.font('Helvetica-Bold');
+    doc.text('ENTREPRISE ST PRINCIPALE :', margin + 50, y);
+    doc.font('Helvetica');
+    doc.text(journal.mainCompanyName.toUpperCase(), margin + 200, y);
+    doc.text('TVA : BE 0793.708.636', pageWidth - margin - 130, y);
+
+    y += 15;
+    doc.text('NIV 2 :', margin + 10, y);
+    doc.font('Helvetica-Bold');
+    doc.text('ST de L\'ENTREPRISE PRINCIPALE :', margin + 50, y);
+    doc.font('Helvetica');
+    doc.text(journal.subcontractorName.toUpperCase(), margin + 200, y);
+    if (journal.subcontractorNumber) {
+      doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 130, y);
+    }
+
+    // Petite ligne de séparation juste sous NIV 2
+    y += 8;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+
+    // Le tableau commence presque directement après NIV 2
+    const tableStartY = y + 3;
+
+    // Tableau simplifié : NISS | Prénom | Nom | Présent | Remarques
+    const colX = {
+      niss: margin,
+      prenom: margin + 100,
+      nom: margin + 200,
+      present: margin + 300,
+      remarques: margin + 380
+    };
+
+    const headerHeight = 25;
+    const rowHeight = 30;
+    
+    // Calculer la hauteur du tableau en fonction du nombre d'ouvriers (minimum 3 lignes)
     const numWorkers = Math.max(journal.workers.length, 3);
     const tableHeight = headerHeight + (numWorkers * rowHeight);
 
@@ -401,8 +450,8 @@ router.get('/:id/pdf', async (req, res) => {
       }
     });
 
-    // Section signature
-    y = tableStartY + tableHeight + 5;
+    // Section signature (espace augmenté)
+    y = tableStartY + tableHeight + 40;
     doc.fillColor('black').fontSize(8).font('Helvetica-Bold');
     doc.text('SIGNATURE DU CHEF DE CHANTIER OU SOUS-TRAITANT :', margin + 10, y);
     y += 15;
@@ -410,7 +459,7 @@ router.get('/:id/pdf', async (req, res) => {
     doc.text('NOM, Prénom & Fonction', margin + 10, y);
 
     // Avertissement en bas (rouge)
-    y += 20;
+    y += 40;
     const warningStartY = y;
     doc.fontSize(7).font('Helvetica-Bold').fillColor('red');
     doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela se passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant sous-traitant sur le chantier.', margin + 10, y, {
