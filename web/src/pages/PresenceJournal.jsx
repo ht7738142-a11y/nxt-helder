@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, Plus, Calendar, Building2, FileText, Download, Trash2, Edit2, Users } from 'lucide-react';
+import { Upload, Plus, Calendar, Building2, FileText, Download, Trash2, Edit2, Users, X } from 'lucide-react';
 import { api } from '../api';
 
 export default function PresenceJournal() {
@@ -307,7 +307,7 @@ export default function PresenceJournal() {
       setManualForm({
         subcontractorName: '',
         subcontractorNumber: '',
-        workers: [{ niss: '', firstName: '', lastName: '' }]
+        workers: [{ niss: '', firstName: '', lastName: '', present: true, remarks: '' }]
       });
       loadExistingJournals();
     } catch (error) {

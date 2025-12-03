@@ -449,7 +449,7 @@ router.get('/:id/pdf', async (req, res) => {
     });
 
     // Section signature
-    y = tableStartY + tableHeight + 10;
+    y = tableStartY + tableHeight + 5;
     doc.fillColor('black').fontSize(8).font('Helvetica-Bold');
     doc.text('SIGNATURE DU CHEF DE CHANTIER OU SOUS-TRAITANT :', margin + 10, y);
     y += 15;
