@@ -244,8 +244,8 @@ router.get('/:id/pdf', async (req, res) => {
     const chantier = await Chantier.findById(journal.chantier);
     const chantierName = chantier ? chantier.title : 'Chantier inconnu';
 
-    // Créer le document PDF
-    const doc = new PDFDocument({ margin: 50 });
+    // Créer le document PDF (format A4)
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
 
     // Headers pour le téléchargement
     res.setHeader('Content-Type', 'application/pdf');
@@ -254,62 +254,177 @@ router.get('/:id/pdf', async (req, res) => {
     // Pipe le PDF vers la réponse
     doc.pipe(res);
 
-    // En-tête
-    doc.fontSize(20).text('Journal de Présences', { align: 'center' });
-    doc.moveDown();
+    const pageWidth = 595.28; // A4 width in points
+    const margin = 40;
+    const contentWidth = pageWidth - 2 * margin;
 
-    // Infos générales
-    doc.fontSize(12);
-    doc.text(`Date: ${new Date(journal.date).toLocaleDateString('fr-BE')}`);
-    doc.text(`Chantier: ${chantierName}`);
-    doc.text(`Entreprise ST Principale: ${journal.mainCompanyName}`);
-    doc.text(`Sous-traitant: ${journal.subcontractorName}`);
-    if (journal.subcontractorNumber) {
-      doc.text(`N° Entreprise: ${journal.subcontractorNumber}`);
-    }
-    doc.moveDown();
+    // Bordure extérieure du document
+    doc.rect(margin, margin, contentWidth, 750).stroke();
 
-    // Tableau des ouvriers
-    doc.fontSize(14).text('Liste des ouvriers présents:', { underline: true });
-    doc.moveDown(0.5);
-
-    doc.fontSize(10);
-    const tableTop = doc.y;
-    const colWidths = { niss: 120, firstName: 100, lastName: 100, present: 80, remarks: 120 };
-    let y = tableTop;
-
-    // En-têtes du tableau
-    doc.font('Helvetica-Bold');
-    doc.text('NISS', 50, y, { width: colWidths.niss, continued: false });
-    doc.text('Prénom', 50 + colWidths.niss, y, { width: colWidths.firstName, continued: false });
-    doc.text('Nom', 50 + colWidths.niss + colWidths.firstName, y, { width: colWidths.lastName, continued: false });
-    doc.text('Présent', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName, y, { width: colWidths.present, continued: false });
-    doc.text('Remarques', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName + colWidths.present, y, { width: colWidths.remarks, continued: false });
-    
-    y += 20;
-    doc.moveTo(50, y).lineTo(550, y).stroke();
-    y += 5;
-
-    // Lignes du tableau
-    doc.font('Helvetica');
-    journal.workers.forEach((worker, index) => {
-      if (y > 700) {
-        doc.addPage();
-        y = 50;
-      }
-
-      doc.text(worker.niss || '', 50, y, { width: colWidths.niss, continued: false });
-      doc.text(worker.firstName || '', 50 + colWidths.niss, y, { width: colWidths.firstName, continued: false });
-      doc.text(worker.lastName || '', 50 + colWidths.niss + colWidths.firstName, y, { width: colWidths.lastName, continued: false });
-      doc.text(worker.present ? 'Oui' : 'Non', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName, y, { width: colWidths.present, continued: false });
-      doc.text(worker.remarks || '', 50 + colWidths.niss + colWidths.firstName + colWidths.lastName + colWidths.present, y, { width: colWidths.remarks, continued: false });
-
-      y += 20;
+    // En-tête - Titre centré
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text('LISTE JOURNALIÈRE DES PRÉSENCES SOUS-TRAITANT', margin + 10, margin + 10, {
+      width: contentWidth - 20,
+      align: 'center'
     });
 
-    // Pied de page
-    doc.moveDown(2);
-    doc.fontSize(8).text(`Document généré le ${new Date().toLocaleString('fr-BE')}`, { align: 'center' });
+    // Ligne séparation
+    doc.moveTo(margin, margin + 30).lineTo(pageWidth - margin, margin + 30).stroke();
+
+    // Infos chantier et date
+    let y = margin + 35;
+    doc.fontSize(8).font('Helvetica');
+    doc.text(`CHANTIER : ${chantierName}`, margin + 10, y);
+    doc.text(`DATE : ${new Date(journal.date).toLocaleDateString('fr-BE')}`, pageWidth - margin - 110, y);
+
+    y += 15;
+    doc.text('Rue du puits communal, 103 6540 Farciennes', margin + 10, y);
+
+    // Ligne séparation
+    y += 15;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+
+    // Chaîne de sous-traitance
+    y += 5;
+    doc.fontSize(8).font('Helvetica-Bold');
+    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y);
+
+    y += 15;
+    doc.fontSize(8).font('Helvetica');
+    doc.text('NIV.1', margin + 10, y);
+    doc.text('ENTREPRISE ST PRINCIPALE :', margin + 50, y);
+    doc.text(journal.mainCompanyName.toUpperCase(), margin + 200, y);
+    doc.text('TVA : BE 0753.708.636', pageWidth - margin - 120, y);
+
+    y += 15;
+    doc.text('NIV.2', margin + 10, y);
+    doc.text('ST de L\'ENTREPRISE PRINCIPALE :', margin + 50, y);
+    doc.text(journal.subcontractorName.toUpperCase(), margin + 200, y);
+    if (journal.subcontractorNumber) {
+      doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 120, y);
+    }
+
+    // Ligne séparation avant tableau
+    y += 20;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+
+    // Tableau principal
+    const tableStartY = y + 5;
+    const colX = {
+      nom: margin,
+      niss: margin + 150,
+      j: margin + 280,
+      n: margin + 300,
+      cns: margin + 320,
+      chsctPres: margin + 340,
+      chsctAbs: margin + 360,
+      intPres: margin + 380,
+      intAbs: margin + 400,
+      absent: margin + 420,
+      present: margin + 440,
+      remarques: margin + 460
+    };
+
+    // En-têtes verticaux du tableau
+    doc.save();
+    doc.fontSize(6).font('Helvetica-Bold');
+    
+    // Rotation pour texte vertical
+    const rotateText = (text, x, yStart) => {
+      doc.save();
+      doc.translate(x, yStart + 80);
+      doc.rotate(-90);
+      doc.text(text, 0, 0);
+      doc.restore();
+    };
+
+    // En-têtes horizontaux
+    doc.text('NOM, PRÉNOM', colX.nom + 5, tableStartY + 35);
+    doc.text('N° REGISTRE NATIONAL', colX.niss + 5, tableStartY + 35);
+    
+    // En-têtes verticaux (colonnes étroites)
+    rotateText('J', colX.j + 5, tableStartY);
+    rotateText('N', colX.n + 5, tableStartY);
+    rotateText('CNS', colX.cns + 5, tableStartY);
+    rotateText('PRÉSENT', colX.chsctPres + 3, tableStartY);
+    rotateText('CHSCT', colX.chsctAbs + 3, tableStartY);
+    rotateText('PRÉSENT', colX.intPres + 3, tableStartY);
+    rotateText('INTÉRIMAIRE', colX.intAbs + 3, tableStartY);
+    rotateText('ABSENT', colX.absent + 3, tableStartY);
+    doc.restore();
+
+    doc.text('PRÉSENT', colX.present + 5, tableStartY + 35);
+    doc.text('REMARQUES', colX.remarques + 5, tableStartY + 35);
+
+    // Lignes verticales du tableau
+    Object.values(colX).forEach(x => {
+      doc.moveTo(x, tableStartY).lineTo(x, tableStartY + 350).stroke();
+    });
+    doc.moveTo(pageWidth - margin, tableStartY).lineTo(pageWidth - margin, tableStartY + 350).stroke();
+
+    // Ligne horizontale sous en-têtes
+    doc.moveTo(margin, tableStartY + 80).lineTo(pageWidth - margin, tableStartY + 80).stroke();
+
+    // Remplir les lignes d'ouvriers
+    y = tableStartY + 85;
+    doc.fontSize(7).font('Helvetica');
+    
+    journal.workers.forEach((worker, index) => {
+      if (index < 10) { // Max 10 lignes sur la page
+        const rowY = y + (index * 25);
+        
+        // Nom et prénom
+        doc.text(`${worker.lastName || ''} ${worker.firstName || ''}`.toUpperCase(), colX.nom + 5, rowY + 5, {
+          width: 140,
+          height: 20
+        });
+        
+        // NISS
+        doc.text(worker.niss || '', colX.niss + 5, rowY + 5);
+        
+        // Cases à cocher (simulées avec des carrés)
+        const drawCheckbox = (x, y, checked = false) => {
+          doc.rect(x + 3, y + 5, 10, 10).stroke();
+          if (checked) {
+            doc.text('☑', x + 3, y + 4);
+          }
+        };
+        
+        drawCheckbox(colX.j, rowY, false);
+        drawCheckbox(colX.n, rowY, false);
+        drawCheckbox(colX.cns, rowY, false);
+        drawCheckbox(colX.chsctPres, rowY, false);
+        drawCheckbox(colX.chsctAbs, rowY, false);
+        drawCheckbox(colX.intPres, rowY, false);
+        drawCheckbox(colX.intAbs, rowY, false);
+        drawCheckbox(colX.absent, rowY, false);
+        drawCheckbox(colX.present, rowY, worker.present !== false);
+        
+        // Remarques
+        doc.text(worker.remarks || '', colX.remarques + 5, rowY + 5, {
+          width: pageWidth - margin - colX.remarques - 10
+        });
+        
+        // Ligne horizontale
+        doc.moveTo(margin, rowY + 25).lineTo(pageWidth - margin, rowY + 25).stroke();
+      }
+    });
+
+    // Section signature
+    y = tableStartY + 355;
+    doc.fontSize(8).font('Helvetica-Bold');
+    doc.text('SIGNATURE DU CHEF DE CHANTIER OU SOUS-TRAITANT :', margin + 10, y);
+    y += 15;
+    doc.font('Helvetica-Oblique').fontSize(7);
+    doc.text('NOM, Prénom & Fonction', margin + 10, y);
+
+    // Avertissement en bas (rouge)
+    y += 50;
+    doc.fontSize(7).font('Helvetica-Bold').fillColor('red');
+    doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela ce passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant-sous traitant sur le chantier.', margin + 10, y, {
+      width: contentWidth - 20,
+      align: 'center'
+    });
 
     // Finaliser le PDF
     doc.end();
