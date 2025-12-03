@@ -325,54 +325,67 @@ router.get('/:id/pdf', async (req, res) => {
       remarques: margin + 460
     };
 
-    // En-têtes verticaux du tableau
-    doc.save();
-    doc.fontSize(6).font('Helvetica-Bold');
+    // Tracer toutes les bordures du tableau d'abord
+    // Bordure extérieure du tableau
+    doc.rect(margin, tableStartY, contentWidth, 350).stroke();
     
-    // Rotation pour texte vertical
-    const rotateText = (text, x, yStart) => {
-      doc.save();
-      doc.translate(x, yStart + 80);
-      doc.rotate(-90);
-      doc.text(text, 0, 0);
-      doc.restore();
-    };
-
-    // En-têtes horizontaux
-    doc.text('NOM, PRÉNOM', colX.nom + 5, tableStartY + 35);
-    doc.text('N° REGISTRE NATIONAL', colX.niss + 5, tableStartY + 35);
-    
-    // En-têtes verticaux (colonnes étroites)
-    rotateText('J', colX.j + 5, tableStartY);
-    rotateText('N', colX.n + 5, tableStartY);
-    rotateText('CNS', colX.cns + 5, tableStartY);
-    rotateText('PRÉSENT', colX.chsctPres + 3, tableStartY);
-    rotateText('CHSCT', colX.chsctAbs + 3, tableStartY);
-    rotateText('PRÉSENT', colX.intPres + 3, tableStartY);
-    rotateText('INTÉRIMAIRE', colX.intAbs + 3, tableStartY);
-    rotateText('ABSENT', colX.absent + 3, tableStartY);
-    doc.restore();
-
-    doc.text('PRÉSENT', colX.present + 5, tableStartY + 35);
-    doc.text('REMARQUES', colX.remarques + 5, tableStartY + 35);
-
     // Lignes verticales du tableau
     Object.values(colX).forEach(x => {
-      doc.moveTo(x, tableStartY).lineTo(x, tableStartY + 350).stroke();
+      if (x > margin) { // Ne pas redessiner la bordure gauche
+        doc.moveTo(x, tableStartY).lineTo(x, tableStartY + 350).stroke();
+      }
     });
-    doc.moveTo(pageWidth - margin, tableStartY).lineTo(pageWidth - margin, tableStartY + 350).stroke();
 
     // Ligne horizontale sous en-têtes
     doc.moveTo(margin, tableStartY + 80).lineTo(pageWidth - margin, tableStartY + 80).stroke();
 
+    // En-têtes du tableau
+    doc.fontSize(6).font('Helvetica-Bold').fillColor('black');
+    
+    // En-têtes horizontaux (colonnes larges)
+    doc.text('NOM, PRÉNOM', colX.nom + 5, tableStartY + 35, { width: 140 });
+    doc.text('N° REGISTRE NATIONAL', colX.niss + 5, tableStartY + 35, { width: 120 });
+    doc.text('PRÉSENT', colX.present + 2, tableStartY + 60, { width: 18 });
+    doc.text('REMARQUES', colX.remarques + 5, tableStartY + 35, { width: pageWidth - margin - colX.remarques - 10 });
+    
+    // En-têtes verticaux (colonnes étroites) - texte pivoté à 90°
+    const drawVerticalText = (text, x, yTop) => {
+      doc.save();
+      doc.translate(x + 8, yTop + 75);
+      doc.rotate(-90);
+      doc.text(text, 0, 0, { width: 70 });
+      doc.restore();
+    };
+
+    drawVerticalText('J', colX.j, tableStartY);
+    drawVerticalText('N', colX.n, tableStartY);
+    drawVerticalText('CNS', colX.cns, tableStartY);
+    drawVerticalText('PRÉSENT CHSCT', colX.chsctPres, tableStartY);
+    drawVerticalText('ABSENT CHSCT', colX.chsctAbs, tableStartY);
+    drawVerticalText('PRÉSENT INTÉRIM', colX.intPres, tableStartY);
+    drawVerticalText('ABSENT INTÉRIM', colX.intAbs, tableStartY);
+    drawVerticalText('ABSENT', colX.absent, tableStartY);
+
     // Remplir les lignes d'ouvriers
     y = tableStartY + 85;
-    doc.fontSize(7).font('Helvetica');
+    doc.fontSize(7).font('Helvetica').fillColor('black');
     
-    journal.workers.forEach((worker, index) => {
-      if (index < 10) { // Max 10 lignes sur la page
-        const rowY = y + (index * 25);
-        
+    // Fonction pour dessiner une case à cocher
+    const drawCheckbox = (x, y, checked = false) => {
+      doc.rect(x + 3, y + 5, 10, 10).stroke();
+      if (checked) {
+        doc.fontSize(8).text('☑', x + 3, y + 4);
+        doc.fontSize(7);
+      }
+    };
+    
+    // Dessiner toutes les lignes (max 10), avec ou sans données
+    const maxRows = 10;
+    for (let index = 0; index < maxRows; index++) {
+      const rowY = y + (index * 25);
+      const worker = journal.workers[index];
+      
+      if (worker) {
         // Nom et prénom
         doc.text(`${worker.lastName || ''} ${worker.firstName || ''}`.toUpperCase(), colX.nom + 5, rowY + 5, {
           width: 140,
@@ -382,14 +395,7 @@ router.get('/:id/pdf', async (req, res) => {
         // NISS
         doc.text(worker.niss || '', colX.niss + 5, rowY + 5);
         
-        // Cases à cocher (simulées avec des carrés)
-        const drawCheckbox = (x, y, checked = false) => {
-          doc.rect(x + 3, y + 5, 10, 10).stroke();
-          if (checked) {
-            doc.text('☑', x + 3, y + 4);
-          }
-        };
-        
+        // Cases à cocher
         drawCheckbox(colX.j, rowY, false);
         drawCheckbox(colX.n, rowY, false);
         drawCheckbox(colX.cns, rowY, false);
@@ -404,11 +410,24 @@ router.get('/:id/pdf', async (req, res) => {
         doc.text(worker.remarks || '', colX.remarques + 5, rowY + 5, {
           width: pageWidth - margin - colX.remarques - 10
         });
-        
-        // Ligne horizontale
+      } else {
+        // Ligne vide - juste les cases à cocher vides
+        drawCheckbox(colX.j, rowY, false);
+        drawCheckbox(colX.n, rowY, false);
+        drawCheckbox(colX.cns, rowY, false);
+        drawCheckbox(colX.chsctPres, rowY, false);
+        drawCheckbox(colX.chsctAbs, rowY, false);
+        drawCheckbox(colX.intPres, rowY, false);
+        drawCheckbox(colX.intAbs, rowY, false);
+        drawCheckbox(colX.absent, rowY, false);
+        drawCheckbox(colX.present, rowY, false);
+      }
+      
+      // Ligne horizontale (sauf la dernière qui est déjà la bordure)
+      if (index < maxRows - 1) {
         doc.moveTo(margin, rowY + 25).lineTo(pageWidth - margin, rowY + 25).stroke();
       }
-    });
+    }
 
     // Section signature
     y = tableStartY + 355;
