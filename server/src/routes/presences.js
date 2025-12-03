@@ -327,51 +327,6 @@ router.get('/:id/pdf', async (req, res) => {
     // Date à droite
     doc.font('Helvetica-Bold').fontSize(9);
     doc.text(`DATE :`, pageWidth - margin - 110, y + 8);
-    doc.font('Helvetica').fontSize(8);
-    doc.text(`${new Date(journal.date).toLocaleDateString('fr-BE')}`, pageWidth - margin - 80, y + 8);
-
-    y += 35;
-
-    // Section chaîne de sous-traitance
-    doc.rect(margin, y, contentWidth, 50).stroke();
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
-    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y + 8);
-
-    y += 20;
-    doc.fontSize(8).font('Helvetica');
-    doc.text('NIV 1', margin + 10, y);
-    doc.font('Helvetica-Bold');
-    doc.text('ENTREPRISE ST PRINCIPALE :', margin + 50, y);
-    doc.font('Helvetica');
-    doc.text(journal.mainCompanyName.toUpperCase(), margin + 200, y);
-    doc.text('TVA : BE 0793.708.636', pageWidth - margin - 130, y);
-
-    y += 15;
-    doc.text('NIV 2 :', margin + 10, y);
-    doc.font('Helvetica-Bold');
-    doc.text('ST de L\'ENTREPRISE PRINCIPALE :', margin + 50, y);
-    doc.font('Helvetica');
-    doc.text(journal.subcontractorName.toUpperCase(), margin + 200, y);
-    if (journal.subcontractorNumber) {
-      doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 130, y);
-    }
-
-    y += 20;
-
-    // Tableau simplifié : NISS | Prénom | Nom | Présent | Remarques
-    const tableStartY = y;
-    const colX = {
-      niss: margin,
-      prenom: margin + 100,
-      nom: margin + 200,
-      present: margin + 300,
-      remarques: margin + 380
-    };
-
-    const headerHeight = 25;
-    const rowHeight = 30;
-    
-    // Calculer la hauteur du tableau en fonction du nombre d'ouvriers (minimum 3 lignes)
     const numWorkers = Math.max(journal.workers.length, 3);
     const tableHeight = headerHeight + (numWorkers * rowHeight);
 
@@ -384,12 +339,10 @@ router.get('/:id/pdf', async (req, res) => {
     doc.moveTo(colX.present, tableStartY).lineTo(colX.present, tableStartY + tableHeight).stroke();
     doc.moveTo(colX.remarques, tableStartY).lineTo(colX.remarques, tableStartY + tableHeight).stroke();
 
-    // Ligne horizontale sous en-têtes
+    // Ligne horizontale sous en-têtes (simple séparation)
     doc.moveTo(margin, tableStartY + headerHeight).lineTo(pageWidth - margin, tableStartY + headerHeight).stroke();
 
-    // En-têtes du tableau (fond gris)
-    doc.rect(margin, tableStartY, contentWidth, headerHeight).fillAndStroke('#f0f0f0', 'black');
-    
+    // En-têtes du tableau (fond blanc, uniquement le texte)
     doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
     doc.text('NISS', colX.niss + 5, tableStartY + 8, { width: 90 });
     doc.text('Prénom', colX.prenom + 5, tableStartY + 8, { width: 90 });
