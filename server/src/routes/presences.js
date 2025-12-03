@@ -398,11 +398,20 @@ router.get('/:id/pdf', async (req, res) => {
     doc.text('Remarques', colX.remarques + 5, tableStartY + 8, { width: pageWidth - margin - colX.remarques - 10 });
 
     // Remplir les lignes d'ouvriers (seulement celles qui existent)
+    // Trier les ouvriers : présents en premier, absents en bas
+    const sortedWorkers = [...journal.workers].sort((a, b) => {
+      const aPresent = a.present !== false;
+      const bPresent = b.present !== false;
+      if (aPresent && !bPresent) return -1;
+      if (!aPresent && bPresent) return 1;
+      return 0;
+    });
+    
     const firstRowY = tableStartY + headerHeight;
     
     doc.fontSize(8).font('Helvetica');
     
-    journal.workers.forEach((worker, index) => {
+    sortedWorkers.forEach((worker, index) => {
       const rowY = firstRowY + (index * rowHeight);
       
       // NISS
@@ -434,7 +443,7 @@ router.get('/:id/pdf', async (req, res) => {
       });
       
       // Ligne horizontale (sauf la dernière qui est la bordure du tableau)
-      if (index < journal.workers.length - 1) {
+      if (index < sortedWorkers.length - 1) {
         doc.moveTo(margin, rowY + rowHeight).lineTo(pageWidth - margin, rowY + rowHeight).stroke();
       }
     });
@@ -448,7 +457,7 @@ router.get('/:id/pdf', async (req, res) => {
     doc.text('NOM, Prénom & Fonction', margin + 10, y);
 
     // Avertissement en bas (rouge)
-    y += 40;
+    y += 20;
     const warningStartY = y;
     doc.fontSize(7).font('Helvetica-Bold').fillColor('red');
     doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela se passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant sous-traitant sur le chantier.', margin + 10, y, {
