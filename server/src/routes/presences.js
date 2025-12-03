@@ -301,9 +301,6 @@ router.get('/:id/pdf', async (req, res) => {
     const margin = 40;
     const contentWidth = pageWidth - 2 * margin;
 
-    // Bordure extérieure du document
-    doc.rect(margin, margin, contentWidth, 750).stroke();
-
     let y = margin;
 
     // En-tête - Titre centré avec bordure
@@ -452,11 +449,19 @@ router.get('/:id/pdf', async (req, res) => {
 
     // Avertissement en bas (rouge)
     y += 40;
+    const warningStartY = y;
     doc.fontSize(7).font('Helvetica-Bold').fillColor('red');
     doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela se passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant sous-traitant sur le chantier.', margin + 10, y, {
       width: contentWidth - 20,
       align: 'center'
     });
+
+    // Calculer la hauteur du texte d'avertissement (environ 3 lignes)
+    y += 30;
+
+    // Tracer la bordure extérieure du document (s'adapte au contenu)
+    const documentHeight = y - margin + 10;
+    doc.rect(margin, margin, contentWidth, documentHeight).stroke();
 
     // Finaliser le PDF
     doc.end();
