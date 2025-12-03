@@ -371,8 +371,12 @@ router.get('/:id/pdf', async (req, res) => {
       remarques: margin + 380
     };
 
-    const tableHeight = 400;
     const headerHeight = 25;
+    const rowHeight = 30;
+    
+    // Calculer la hauteur du tableau en fonction du nombre d'ouvriers (minimum 3 lignes)
+    const numWorkers = Math.max(journal.workers.length, 3);
+    const tableHeight = headerHeight + (numWorkers * rowHeight);
 
     // Bordure extérieure du tableau
     doc.rect(margin, tableStartY, contentWidth, tableHeight).stroke();
@@ -396,52 +400,47 @@ router.get('/:id/pdf', async (req, res) => {
     doc.text('Présent', colX.present + 5, tableStartY + 8, { width: 70 });
     doc.text('Remarques', colX.remarques + 5, tableStartY + 8, { width: pageWidth - margin - colX.remarques - 10 });
 
-    // Remplir les lignes d'ouvriers
+    // Remplir les lignes d'ouvriers (seulement celles qui existent)
     const firstRowY = tableStartY + headerHeight;
-    const rowHeight = 30;
-    const maxRows = 12;
     
     doc.fontSize(8).font('Helvetica');
     
-    for (let index = 0; index < maxRows; index++) {
+    journal.workers.forEach((worker, index) => {
       const rowY = firstRowY + (index * rowHeight);
-      const worker = journal.workers[index];
       
-      if (worker) {
-        // NISS
-        doc.fillColor('black');
-        doc.text(worker.niss || '', colX.niss + 5, rowY + 10, { width: 90 });
-        
-        // Prénom (sans espaces inutiles)
-        const prenom = (worker.firstName || '').trim();
-        doc.text(prenom.toUpperCase(), colX.prenom + 5, rowY + 10, { width: 90 });
-        
-        // Nom (sans espaces inutiles)
-        const nom = (worker.lastName || '').trim();
-        doc.text(nom.toUpperCase(), colX.nom + 5, rowY + 10, { width: 90 });
-        
-        // Présent (Oui en vert, Non en rouge)
-        const isPresent = worker.present !== false;
-        if (isPresent) {
-          doc.fillColor('green').font('Helvetica-Bold');
-          doc.text('Oui', colX.present + 5, rowY + 10);
-        } else {
-          doc.fillColor('red').font('Helvetica-Bold');
-          doc.text('Non', colX.present + 5, rowY + 10);
-        }
-        doc.fillColor('black').font('Helvetica');
-        
-        // Remarques
-        doc.text(worker.remarks || '', colX.remarques + 5, rowY + 10, {
-          width: pageWidth - margin - colX.remarques - 10
-        });
+      // NISS
+      doc.fillColor('black');
+      doc.text(worker.niss || '', colX.niss + 5, rowY + 10, { width: 90 });
+      
+      // Prénom (sans espaces inutiles)
+      const prenom = (worker.firstName || '').trim();
+      doc.text(prenom.toUpperCase(), colX.prenom + 5, rowY + 10, { width: 90 });
+      
+      // Nom (sans espaces inutiles)
+      const nom = (worker.lastName || '').trim();
+      doc.text(nom.toUpperCase(), colX.nom + 5, rowY + 10, { width: 90 });
+      
+      // Présent (Oui en vert, Non en rouge)
+      const isPresent = worker.present !== false;
+      if (isPresent) {
+        doc.fillColor('green').font('Helvetica-Bold');
+        doc.text('Oui', colX.present + 5, rowY + 10);
+      } else {
+        doc.fillColor('red').font('Helvetica-Bold');
+        doc.text('Non', colX.present + 5, rowY + 10);
       }
+      doc.fillColor('black').font('Helvetica');
+      
+      // Remarques
+      doc.text(worker.remarks || '', colX.remarques + 5, rowY + 10, {
+        width: pageWidth - margin - colX.remarques - 10
+      });
       
       // Ligne horizontale (sauf la dernière qui est la bordure du tableau)
-      if (index < maxRows - 1) {
+      if (index < journal.workers.length - 1) {
         doc.moveTo(margin, rowY + rowHeight).lineTo(pageWidth - margin, rowY + rowHeight).stroke();
       }
-    }
+    });
 
     // Section signature
     y = tableStartY + tableHeight + 10;
