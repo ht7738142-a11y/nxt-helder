@@ -261,186 +261,155 @@ router.get('/:id/pdf', async (req, res) => {
     // Bordure extérieure du document
     doc.rect(margin, margin, contentWidth, 750).stroke();
 
-    // En-tête - Titre centré
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('LISTE JOURNALIÈRE DES PRÉSENCES SOUS-TRAITANT', margin + 10, margin + 10, {
-      width: contentWidth - 20,
-      align: 'center'
+    let y = margin;
+
+    // En-tête - Titre centré avec bordure
+    doc.rect(margin, y, contentWidth, 25).stroke();
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('black');
+    doc.text('LISTE JOURNALIÈRE DES PRÉSENCES SOUS-TRAITANT', margin, y + 8, {
+      width: contentWidth,
+      align: 'center',
+      underline: true
     });
 
-    // Ligne séparation
-    doc.moveTo(margin, margin + 30).lineTo(pageWidth - margin, margin + 30).stroke();
+    y += 25;
 
-    // Infos chantier et date
-    let y = margin + 35;
+    // Section chantier (fond gris)
+    doc.rect(margin, y, contentWidth, 35).fillAndStroke('#f0f0f0', 'black');
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
+    
+    // Chantier à gauche
+    doc.text(`CHANTIER :`, margin + 10, y + 8);
+    doc.font('Helvetica').fontSize(8);
+    doc.text(`${chantierName}`, margin + 80, y + 8);
+    doc.text(`Rue du puits communal, 103 6540 Farciennes`, margin + 80, y + 20);
+    
+    // Date à droite
+    doc.font('Helvetica-Bold').fontSize(9);
+    doc.text(`DATE :`, pageWidth - margin - 110, y + 8);
+    doc.font('Helvetica').fontSize(8);
+    doc.text(`${new Date(journal.date).toLocaleDateString('fr-BE')}`, pageWidth - margin - 80, y + 8);
+
+    y += 35;
+
+    // Section chaîne de sous-traitance
+    doc.rect(margin, y, contentWidth, 50).stroke();
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
+    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y + 8);
+
+    y += 20;
     doc.fontSize(8).font('Helvetica');
-    doc.text(`CHANTIER : ${chantierName}`, margin + 10, y);
-    doc.text(`DATE : ${new Date(journal.date).toLocaleDateString('fr-BE')}`, pageWidth - margin - 110, y);
-
-    y += 15;
-    doc.text('Rue du puits communal, 103 6540 Farciennes', margin + 10, y);
-
-    // Ligne séparation
-    y += 15;
-    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
-
-    // Chaîne de sous-traitance
-    y += 5;
-    doc.fontSize(8).font('Helvetica-Bold');
-    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y);
-
-    y += 15;
-    doc.fontSize(8).font('Helvetica');
-    doc.text('NIV.1', margin + 10, y);
+    doc.text('NIV 1', margin + 10, y);
+    doc.font('Helvetica-Bold');
     doc.text('ENTREPRISE ST PRINCIPALE :', margin + 50, y);
+    doc.font('Helvetica');
     doc.text(journal.mainCompanyName.toUpperCase(), margin + 200, y);
-    doc.text('TVA : BE 0753.708.636', pageWidth - margin - 120, y);
+    doc.text('TVA : BE 0793.708.636', pageWidth - margin - 130, y);
 
     y += 15;
-    doc.text('NIV.2', margin + 10, y);
+    doc.text('NIV 2 :', margin + 10, y);
+    doc.font('Helvetica-Bold');
     doc.text('ST de L\'ENTREPRISE PRINCIPALE :', margin + 50, y);
+    doc.font('Helvetica');
     doc.text(journal.subcontractorName.toUpperCase(), margin + 200, y);
     if (journal.subcontractorNumber) {
-      doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 120, y);
+      doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 130, y);
     }
 
-    // Ligne séparation avant tableau
     y += 20;
-    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
 
-    // Tableau principal
-    const tableStartY = y + 5;
+    // Tableau simplifié : NISS | Prénom | Nom | Présent | Remarques
+    const tableStartY = y;
     const colX = {
-      nom: margin,
-      niss: margin + 150,
-      j: margin + 280,
-      n: margin + 300,
-      cns: margin + 320,
-      chsctPres: margin + 340,
-      chsctAbs: margin + 360,
-      intPres: margin + 380,
-      intAbs: margin + 400,
-      absent: margin + 420,
-      present: margin + 440,
-      remarques: margin + 460
+      niss: margin,
+      prenom: margin + 100,
+      nom: margin + 200,
+      present: margin + 300,
+      remarques: margin + 380
     };
 
-    // Tracer toutes les bordures du tableau d'abord
+    const tableHeight = 400;
+    const headerHeight = 25;
+
     // Bordure extérieure du tableau
-    doc.rect(margin, tableStartY, contentWidth, 350).stroke();
+    doc.rect(margin, tableStartY, contentWidth, tableHeight).stroke();
     
     // Lignes verticales du tableau
-    Object.values(colX).forEach(x => {
-      if (x > margin) { // Ne pas redessiner la bordure gauche
-        doc.moveTo(x, tableStartY).lineTo(x, tableStartY + 350).stroke();
-      }
-    });
+    doc.moveTo(colX.prenom, tableStartY).lineTo(colX.prenom, tableStartY + tableHeight).stroke();
+    doc.moveTo(colX.nom, tableStartY).lineTo(colX.nom, tableStartY + tableHeight).stroke();
+    doc.moveTo(colX.present, tableStartY).lineTo(colX.present, tableStartY + tableHeight).stroke();
+    doc.moveTo(colX.remarques, tableStartY).lineTo(colX.remarques, tableStartY + tableHeight).stroke();
 
     // Ligne horizontale sous en-têtes
-    doc.moveTo(margin, tableStartY + 80).lineTo(pageWidth - margin, tableStartY + 80).stroke();
+    doc.moveTo(margin, tableStartY + headerHeight).lineTo(pageWidth - margin, tableStartY + headerHeight).stroke();
 
-    // En-têtes du tableau
-    doc.fontSize(6).font('Helvetica-Bold').fillColor('black');
+    // En-têtes du tableau (fond gris)
+    doc.rect(margin, tableStartY, contentWidth, headerHeight).fillAndStroke('#f0f0f0', 'black');
     
-    // En-têtes horizontaux (colonnes larges)
-    doc.text('NOM, PRÉNOM', colX.nom + 5, tableStartY + 35, { width: 140 });
-    doc.text('N° REGISTRE NATIONAL', colX.niss + 5, tableStartY + 35, { width: 120 });
-    doc.text('PRÉSENT', colX.present + 2, tableStartY + 60, { width: 18 });
-    doc.text('REMARQUES', colX.remarques + 5, tableStartY + 35, { width: pageWidth - margin - colX.remarques - 10 });
-    
-    // En-têtes verticaux (colonnes étroites) - texte pivoté à 90°
-    const drawVerticalText = (text, x, yTop) => {
-      doc.save();
-      doc.translate(x + 8, yTop + 75);
-      doc.rotate(-90);
-      doc.text(text, 0, 0, { width: 70 });
-      doc.restore();
-    };
-
-    drawVerticalText('J', colX.j, tableStartY);
-    drawVerticalText('N', colX.n, tableStartY);
-    drawVerticalText('CNS', colX.cns, tableStartY);
-    drawVerticalText('PRÉSENT CHSCT', colX.chsctPres, tableStartY);
-    drawVerticalText('ABSENT CHSCT', colX.chsctAbs, tableStartY);
-    drawVerticalText('PRÉSENT INTÉRIM', colX.intPres, tableStartY);
-    drawVerticalText('ABSENT INTÉRIM', colX.intAbs, tableStartY);
-    drawVerticalText('ABSENT', colX.absent, tableStartY);
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
+    doc.text('NISS', colX.niss + 5, tableStartY + 8, { width: 90 });
+    doc.text('Prénom', colX.prenom + 5, tableStartY + 8, { width: 90 });
+    doc.text('Nom', colX.nom + 5, tableStartY + 8, { width: 90 });
+    doc.text('Présent', colX.present + 5, tableStartY + 8, { width: 70 });
+    doc.text('Remarques', colX.remarques + 5, tableStartY + 8, { width: pageWidth - margin - colX.remarques - 10 });
 
     // Remplir les lignes d'ouvriers
-    y = tableStartY + 85;
-    doc.fontSize(7).font('Helvetica').fillColor('black');
+    const firstRowY = tableStartY + headerHeight;
+    const rowHeight = 30;
+    const maxRows = 12;
     
-    // Fonction pour dessiner une case à cocher
-    const drawCheckbox = (x, y, checked = false) => {
-      doc.rect(x + 3, y + 5, 10, 10).stroke();
-      if (checked) {
-        doc.fontSize(8).text('☑', x + 3, y + 4);
-        doc.fontSize(7);
-      }
-    };
+    doc.fontSize(8).font('Helvetica');
     
-    // Dessiner toutes les lignes (max 10), avec ou sans données
-    const maxRows = 10;
     for (let index = 0; index < maxRows; index++) {
-      const rowY = y + (index * 25);
+      const rowY = firstRowY + (index * rowHeight);
       const worker = journal.workers[index];
       
       if (worker) {
-        // Nom et prénom
-        doc.text(`${worker.lastName || ''} ${worker.firstName || ''}`.toUpperCase(), colX.nom + 5, rowY + 5, {
-          width: 140,
-          height: 20
-        });
-        
         // NISS
-        doc.text(worker.niss || '', colX.niss + 5, rowY + 5);
+        doc.fillColor('black');
+        doc.text(worker.niss || '', colX.niss + 5, rowY + 10, { width: 90 });
         
-        // Cases à cocher
-        drawCheckbox(colX.j, rowY, false);
-        drawCheckbox(colX.n, rowY, false);
-        drawCheckbox(colX.cns, rowY, false);
-        drawCheckbox(colX.chsctPres, rowY, false);
-        drawCheckbox(colX.chsctAbs, rowY, false);
-        drawCheckbox(colX.intPres, rowY, false);
-        drawCheckbox(colX.intAbs, rowY, false);
-        drawCheckbox(colX.absent, rowY, false);
-        drawCheckbox(colX.present, rowY, worker.present !== false);
+        // Prénom
+        doc.text((worker.firstName || '').toUpperCase(), colX.prenom + 5, rowY + 10, { width: 90 });
+        
+        // Nom
+        doc.text((worker.lastName || '').toUpperCase(), colX.nom + 5, rowY + 10, { width: 90 });
+        
+        // Présent (Oui en vert, Non en rouge)
+        const isPresent = worker.present !== false;
+        if (isPresent) {
+          doc.fillColor('green').font('Helvetica-Bold');
+          doc.text('Oui', colX.present + 5, rowY + 10);
+        } else {
+          doc.fillColor('red').font('Helvetica-Bold');
+          doc.text('Non', colX.present + 5, rowY + 10);
+        }
+        doc.fillColor('black').font('Helvetica');
         
         // Remarques
-        doc.text(worker.remarks || '', colX.remarques + 5, rowY + 5, {
+        doc.text(worker.remarks || '', colX.remarques + 5, rowY + 10, {
           width: pageWidth - margin - colX.remarques - 10
         });
-      } else {
-        // Ligne vide - juste les cases à cocher vides
-        drawCheckbox(colX.j, rowY, false);
-        drawCheckbox(colX.n, rowY, false);
-        drawCheckbox(colX.cns, rowY, false);
-        drawCheckbox(colX.chsctPres, rowY, false);
-        drawCheckbox(colX.chsctAbs, rowY, false);
-        drawCheckbox(colX.intPres, rowY, false);
-        drawCheckbox(colX.intAbs, rowY, false);
-        drawCheckbox(colX.absent, rowY, false);
-        drawCheckbox(colX.present, rowY, false);
       }
       
-      // Ligne horizontale (sauf la dernière qui est déjà la bordure)
+      // Ligne horizontale (sauf la dernière qui est la bordure du tableau)
       if (index < maxRows - 1) {
-        doc.moveTo(margin, rowY + 25).lineTo(pageWidth - margin, rowY + 25).stroke();
+        doc.moveTo(margin, rowY + rowHeight).lineTo(pageWidth - margin, rowY + rowHeight).stroke();
       }
     }
 
     // Section signature
-    y = tableStartY + 355;
-    doc.fontSize(8).font('Helvetica-Bold');
+    y = tableStartY + tableHeight + 10;
+    doc.fillColor('black').fontSize(8).font('Helvetica-Bold');
     doc.text('SIGNATURE DU CHEF DE CHANTIER OU SOUS-TRAITANT :', margin + 10, y);
     y += 15;
     doc.font('Helvetica-Oblique').fontSize(7);
     doc.text('NOM, Prénom & Fonction', margin + 10, y);
 
     // Avertissement en bas (rouge)
-    y += 50;
+    y += 40;
     doc.fontSize(7).font('Helvetica-Bold').fillColor('red');
-    doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela ce passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant-sous traitant sur le chantier.', margin + 10, y, {
+    doc.text('IMPORTANT : Ce document doit être complété et signé chaque matin par le responsable du chantier de l\'entreprise avec laquelle nous travaillons. Cela se passe avant l\'heure de pointage. Nous devons toujours savoir qui interviennent de nos sous-traitant sous-traitant sur le chantier.', margin + 10, y, {
       width: contentWidth - 20,
       align: 'center'
     });
