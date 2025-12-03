@@ -332,11 +332,14 @@ router.get('/:id/pdf', async (req, res) => {
 
     y += 35;
 
-    // Section chaîne de sous-traitance (sans rectangle fixe)
+    // Section chaîne de sous-traitance (rectangle bien défini)
+    const chainStartY = y;
+    doc.rect(margin, y, contentWidth, 50).stroke();
+    
     doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
-    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin, y);
+    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 5, y + 5);
 
-    y += 15;
+    y += 18;
     doc.fontSize(8).font('Helvetica');
     doc.text('NIV 1', margin + 10, y);
     doc.font('Helvetica-Bold');
@@ -345,7 +348,7 @@ router.get('/:id/pdf', async (req, res) => {
     doc.text(journal.mainCompanyName.toUpperCase(), margin + 200, y);
     doc.text('TVA : BE 0793.708.636', pageWidth - margin - 130, y);
 
-    y += 15;
+    y += 13;
     doc.text('NIV 2 :', margin + 10, y);
     doc.font('Helvetica-Bold');
     doc.text('ST de L\'ENTREPRISE PRINCIPALE :', margin + 50, y);
@@ -355,12 +358,8 @@ router.get('/:id/pdf', async (req, res) => {
       doc.text(`TVA : ${journal.subcontractorNumber}`, pageWidth - margin - 130, y);
     }
 
-    // Petite ligne de séparation juste sous NIV 2
-    y += 2;
-    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
-
-    // Le tableau commence directement après la ligne
-    const tableStartY = y + 1;
+    // Le tableau commence juste après le rectangle CHAÎNE DE SOUS-TRAITANCE
+    const tableStartY = chainStartY + 50;
 
     // Tableau simplifié : NISS | Prénom | Nom | Présent | Remarques
     const colX = {
