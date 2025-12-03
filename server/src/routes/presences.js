@@ -111,18 +111,61 @@ router.post('/', async (req, res) => {
       );
     }
 
-    // Créer les journaux
+    // Créer ou mettre à jour les journaux (fusion des ouvriers)
     for (const journal of journals) {
-      const newJournal = await PresenceJournal.create({
+      // Chercher si un journal existe déjà pour cette entreprise, date et chantier
+      const existingJournal = await PresenceJournal.findOne({
+        user: userId,
         chantier: chantierId,
         date,
-        mainCompanyName,
-        subcontractorName: journal.subcontractorName,
-        subcontractorNumber: journal.subcontractorNumber || '',
-        workers: journal.workers || [],
-        user: userId
+        subcontractorName: journal.subcontractorName
       });
-      createdJournals.push(newJournal);
+
+      if (existingJournal) {
+        // Journal existe : fusionner les ouvriers (éviter les doublons basés sur NISS)
+        const existingWorkers = existingJournal.workers || [];
+        const newWorkers = journal.workers || [];
+        
+        // Créer un Map des ouvriers existants par NISS
+        const workersMap = new Map();
+        existingWorkers.forEach(worker => {
+          if (worker.niss) {
+            workersMap.set(worker.niss, worker);
+          }
+        });
+        
+        // Ajouter ou mettre à jour avec les nouveaux ouvriers
+        newWorkers.forEach(worker => {
+          if (worker.niss) {
+            workersMap.set(worker.niss, worker);
+          }
+        });
+        
+        // Convertir le Map en tableau
+        const mergedWorkers = Array.from(workersMap.values());
+        
+        // Mettre à jour le journal existant
+        existingJournal.workers = mergedWorkers;
+        existingJournal.mainCompanyName = mainCompanyName;
+        if (journal.subcontractorNumber) {
+          existingJournal.subcontractorNumber = journal.subcontractorNumber;
+        }
+        await existingJournal.save();
+        
+        createdJournals.push(existingJournal);
+      } else {
+        // Journal n'existe pas : en créer un nouveau
+        const newJournal = await PresenceJournal.create({
+          chantier: chantierId,
+          date,
+          mainCompanyName,
+          subcontractorName: journal.subcontractorName,
+          subcontractorNumber: journal.subcontractorNumber || '',
+          workers: journal.workers || [],
+          user: userId
+        });
+        createdJournals.push(newJournal);
+      }
     }
 
     res.status(201).json(createdJournals);
