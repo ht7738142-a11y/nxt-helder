@@ -332,12 +332,11 @@ router.get('/:id/pdf', async (req, res) => {
 
     y += 35;
 
-    // Section chaîne de sous-traitance
-    doc.rect(margin, y, contentWidth, 50).stroke();
+    // Section chaîne de sous-traitance (sans rectangle fixe)
     doc.fontSize(9).font('Helvetica-Bold').fillColor('black');
-    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin + 10, y + 8);
+    doc.text('CHAÎNE DE SOUS-TRAITANCE :', margin, y);
 
-    y += 20;
+    y += 15;
     doc.fontSize(8).font('Helvetica');
     doc.text('NIV 1', margin + 10, y);
     doc.font('Helvetica-Bold');
@@ -357,7 +356,7 @@ router.get('/:id/pdf', async (req, res) => {
     }
 
     // Petite ligne de séparation juste sous NIV 2
-    y += 8;
+    y += 5;
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
 
     // Le tableau commence presque directement après NIV 2
