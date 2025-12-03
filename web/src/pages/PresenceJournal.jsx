@@ -15,10 +15,11 @@ export default function PresenceJournal() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('init'); // init, csv-uploaded, journals-created
   const [showManualForm, setShowManualForm] = useState(false);
+  const [editingJournal, setEditingJournal] = useState(null);
   const [manualForm, setManualForm] = useState({
     subcontractorName: '',
     subcontractorNumber: '',
-    workers: [{ niss: '', firstName: '', lastName: '' }]
+    workers: [{ niss: '', firstName: '', lastName: '', present: true }]
   });
 
   useEffect(() => {
@@ -201,6 +202,56 @@ export default function PresenceJournal() {
     }
   };
 
+  const handleEditJournal = (journal) => {
+    // Trier les ouvriers : présents en premier, absents en bas
+    const sortedWorkers = [...journal.workers].sort((a, b) => {
+      const aPresent = a.present !== false;
+      const bPresent = b.present !== false;
+      if (aPresent && !bPresent) return -1;
+      if (!aPresent && bPresent) return 1;
+      return 0;
+    });
+    
+    setEditingJournal(journal);
+    setManualForm({
+      subcontractorName: journal.subcontractorName,
+      subcontractorNumber: journal.subcontractorNumber || '',
+      workers: sortedWorkers.map(w => ({
+        niss: w.niss || '',
+        firstName: w.firstName || '',
+        lastName: w.lastName || '',
+        present: w.present !== false,
+        remarks: w.remarks || ''
+      }))
+    });
+    setShowManualForm(true);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setLoading(true);
+      await api.put(`/presences/${editingJournal._id}`, {
+        subcontractorName: manualForm.subcontractorName,
+        subcontractorNumber: manualForm.subcontractorNumber,
+        workers: manualForm.workers
+      });
+      alert('Journal modifié avec succès');
+      setShowManualForm(false);
+      setEditingJournal(null);
+      setManualForm({
+        subcontractorName: '',
+        subcontractorNumber: '',
+        workers: [{ niss: '', firstName: '', lastName: '', present: true }]
+      });
+      loadExistingJournals();
+    } catch (error) {
+      console.error('Erreur modification journal:', error);
+      alert('Erreur lors de la modification');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReset = () => {
     setStep('init');
     setParsedCompanies([]);
@@ -235,13 +286,12 @@ export default function PresenceJournal() {
       const journalData = {
         subcontractorName: manualForm.subcontractorName.trim(),
         subcontractorNumber: manualForm.subcontractorNumber.trim(),
-        workers: validWorkers.map(w => ({
+        workers: manualForm.workers.map(w => ({
           niss: w.niss.trim(),
           firstName: w.firstName.trim(),
           lastName: w.lastName.trim(),
-          morningPresent: true,
-          afternoonPresent: true,
-          remarks: ''
+          present: w.present !== false,
+          remarks: w.remarks || ''
         }))
       };
 
@@ -271,7 +321,7 @@ export default function PresenceJournal() {
   const addWorker = () => {
     setManualForm({
       ...manualForm,
-      workers: [...manualForm.workers, { niss: '', firstName: '', lastName: '' }]
+      workers: [...manualForm.workers, { niss: '', firstName: '', lastName: '', present: true, remarks: '' }]
     });
   };
 
@@ -506,7 +556,7 @@ export default function PresenceJournal() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => window.location.href = `/presences/${journal._id}`}
+                    onClick={() => handleEditJournal(journal)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Voir/Modifier"
                   >
@@ -539,9 +589,19 @@ export default function PresenceJournal() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Saisie manuelle - Journal de présence</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingJournal ? 'Modifier le journal de présence' : 'Saisie manuelle - Journal de présence'}
+              </h2>
               <button
-                onClick={() => setShowManualForm(false)}
+                onClick={() => {
+                  setShowManualForm(false);
+                  setEditingJournal(null);
+                  setManualForm({
+                    subcontractorName: '',
+                    subcontractorNumber: '',
+                    workers: [{ niss: '', firstName: '', lastName: '', present: true }]
+                  });
+                }}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -596,28 +656,48 @@ export default function PresenceJournal() {
                 <div className="space-y-3">
                   {manualForm.workers.map((worker, index) => (
                     <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-                      <div className="flex-1 grid grid-cols-3 gap-3">
-                        <input
-                          type="text"
-                          value={worker.lastName}
-                          onChange={(e) => updateWorker(index, 'lastName', e.target.value)}
-                          placeholder="Nom"
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <input
-                          type="text"
-                          value={worker.firstName}
-                          onChange={(e) => updateWorker(index, 'firstName', e.target.value)}
-                          placeholder="Prénom"
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <input
-                          type="text"
-                          value={worker.niss}
-                          onChange={(e) => updateWorker(index, 'niss', e.target.value)}
-                          placeholder="NISS"
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                      <div className="flex-1 space-y-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <input
+                            type="text"
+                            value={worker.lastName}
+                            onChange={(e) => updateWorker(index, 'lastName', e.target.value)}
+                            placeholder="Nom"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <input
+                            type="text"
+                            value={worker.firstName}
+                            onChange={(e) => updateWorker(index, 'firstName', e.target.value)}
+                            placeholder="Prénom"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <input
+                            type="text"
+                            value={worker.niss}
+                            onChange={(e) => updateWorker(index, 'niss', e.target.value)}
+                            placeholder="NISS"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={worker.present !== false}
+                              onChange={(e) => updateWorker(index, 'present', e.target.checked)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">Présent</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={worker.remarks || ''}
+                            onChange={(e) => updateWorker(index, 'remarks', e.target.value)}
+                            placeholder="Remarques"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
                       </div>
                       {manualForm.workers.length > 1 && (
                         <button
@@ -636,18 +716,26 @@ export default function PresenceJournal() {
 
             <div className="flex gap-3 p-6 border-t border-gray-200">
               <button
-                onClick={() => setShowManualForm(false)}
+                onClick={() => {
+                  setShowManualForm(false);
+                  setEditingJournal(null);
+                  setManualForm({
+                    subcontractorName: '',
+                    subcontractorNumber: '',
+                    workers: [{ niss: '', firstName: '', lastName: '', present: true }]
+                  });
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
               <button
-                onClick={handleCreateManualJournal}
+                onClick={editingJournal ? handleSaveEdit : handleCreateManualJournal}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                {loading ? 'Création...' : 'Créer le journal'}
+                {loading ? (editingJournal ? 'Enregistrement...' : 'Création...') : (editingJournal ? 'Enregistrer' : 'Créer le journal')}
               </button>
             </div>
           </div>
