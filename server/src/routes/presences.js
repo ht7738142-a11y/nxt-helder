@@ -231,6 +231,8 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
+    console.log('PUT /presences/:id - Updates reçus:', JSON.stringify(updates, null, 2));
+
     // Protéger certains champs
     delete updates.user;
     delete updates._id;
@@ -245,6 +247,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Journal non trouvé' });
     }
 
+    console.log('Journal mis à jour avec succès:', journal._id);
     res.json(journal);
   } catch (error) {
     console.error('Erreur mise à jour journal:', error);

@@ -236,15 +236,20 @@ export default function PresenceJournal() {
         niss: w.niss?.trim() || '',
         firstName: w.firstName?.trim() || '',
         lastName: w.lastName?.trim() || '',
-        present: w.present === true, // Force true ou false, jamais undefined
+        present: Boolean(w.present), // Force true ou false explicitement
         remarks: w.remarks?.trim() || ''
       }));
       
-      await api.put(`/presences/${editingJournal._id}`, {
+      console.log('Sauvegarde des ouvriers:', workersToSave); // Debug
+      
+      const response = await api.put(`/presences/${editingJournal._id}`, {
         subcontractorName: manualForm.subcontractorName,
         subcontractorNumber: manualForm.subcontractorNumber,
         workers: workersToSave
       });
+      
+      console.log('Réponse serveur:', response.data); // Debug
+      
       alert('Journal modifié avec succès');
       setShowManualForm(false);
       setEditingJournal(null);
@@ -256,7 +261,8 @@ export default function PresenceJournal() {
       loadExistingJournals();
     } catch (error) {
       console.error('Erreur modification journal:', error);
-      alert('Erreur lors de la modification');
+      console.error('Détails erreur:', error.response?.data); // Debug
+      alert(`Erreur lors de la modification: ${error.response?.data?.error || error.message}`);
     } finally {
       setLoading(false);
     }
