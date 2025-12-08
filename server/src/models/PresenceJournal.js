@@ -13,6 +13,10 @@ const workerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  present: {
+    type: Boolean,
+    default: true
+  },
   morningPresent: {
     type: Boolean,
     default: true
